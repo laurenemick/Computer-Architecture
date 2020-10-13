@@ -39,6 +39,7 @@ class CPU:
         #     address += 1
 
         address = 0
+        program = []
 
         # Read program
         if len(sys.argv) != 2:
@@ -48,29 +49,23 @@ class CPU:
         try:
             with open(sys.argv[1]) as f:
                 for line in f:
-                    comment_split = line.split("#")
-                    num = comment_split[0].strip()
-                    if num == '':  # ignore blanks
+                    line = line.strip()
+
+                    # ignore blank lines and everything after a `#`
+                    if line == '' or line[0] == "#":
                         continue
-                    val = int(num, 2)
-                # for line in f:
-                #     line = line.strip()
 
-                #     # ignore blank lines and everything after a `#`
-                #     if line == '' or line[0] == "#":
-                #         continue
-
-                #     # convert the binary strings to integer values to store in RAM
-                #     try:
-                #         str_value = line.split("#")[0]
-                #         value = int(str_value, 2) 
+                    # convert the binary strings to integer values to store in RAM
+                    try:
+                        str_value = line.split("#")[0]
+                        value = int(str_value, 2) 
                     
-                #     except ValueError:
-                #         print(f"Invalid number: {str_value}")
-                #         sys.exit(1)
+                    except ValueError:
+                        print(f"Invalid number: {str_value}")
+                        sys.exit(1)
 
                     # load value in memory
-                    self.ram[address] = val
+                    self.ram[address] = value
                     address += 1
                     
         except FileNotFoundError:
@@ -90,7 +85,7 @@ class CPU:
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
         elif op == "MUL":
-            self.reg[reg_a] *= reg_b
+            self.reg[reg_a] *= self.reg[reg_b]
         #elif op == "SUB": etc
         else:
             raise Exception("Unsupported ALU operation")
@@ -118,10 +113,10 @@ class CPU:
     def run(self):
         """Run the CPU."""
         halted = False
-        operand_a = self.ram_read(self.pc+1)
-        operand_b = self.ram_read(self.pc+2)
 
         while not halted:
+            operand_a = self.ram_read(self.pc+1)
+            operand_b = self.ram_read(self.pc+2)
             instruction = self.ram[self.pc]
             # print(instruction)
             
@@ -147,8 +142,9 @@ class CPU:
                 print('instruction not found')
                 sys.exit(1)
 
-            inst_len = ((instruction & 0b11000000) >> 6) + 1
-            # OR: inst_len = f(instruction >> 6) + 1
+            # inst_len = ((instruction & 0b11000000) >> 6) + 1
+            # OR: 
+            inst_len = (instruction >> 6) + 1
             self.pc += inst_len
 
             # read instruction layout!!!

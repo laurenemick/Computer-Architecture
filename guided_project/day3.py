@@ -92,9 +92,7 @@ while not halted:
         # copy the value onto the stack
 		top_of_stack_addr = register[SP]
 		memory[top_of_stack_addr] = value
-
 		pc += 2
-
 		print(memory[0xf0:0xf4])
             
 	elif instruction == POP:

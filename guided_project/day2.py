@@ -18,10 +18,6 @@ memory = [0] * 256
 
 register = [0] * 8  # [0,0,0,0,0,0,0,0]
 
-
-day2 = "/Users/adrienneemick/Desktop/Lambda/web32cs/Computer-Architecture/guided_project/day2.py"
-prog1 = "/Users/adrienneemick/Desktop/Lambda/web32cs/Computer-Architecture/guided_project/prog1.txt"
-
 address = 0
 
 # Read program

@@ -39,7 +39,6 @@ class CPU:
         #     address += 1
 
         address = 0
-        program = []
 
         # Read program
         if len(sys.argv) != 2:

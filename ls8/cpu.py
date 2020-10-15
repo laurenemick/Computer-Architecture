@@ -11,6 +11,7 @@ PUSH = 0b01000101
 POP = 0b01000110
 CALL = 0b01010000
 RET = 0b00010001
+ADD = 0b10100000
 
 class CPU:
     """Main CPU class."""
@@ -95,6 +96,19 @@ class CPU:
 
         print()
 
+    def push_val(self, value):
+        self.reg[7] -= 1
+        top_of_stack_addr = self.reg[7]
+        self.ram[top_of_stack_addr] = value
+
+    def pop_val(self):
+        # get value from top of stack
+        top_of_stack_addr = self.reg[7]
+        value = self.ram_read(top_of_stack_addr)
+        # increment the SP
+        self.reg[7] += 1
+        return value
+
     def run(self):
         """Run the CPU."""
         halted = False
@@ -147,15 +161,39 @@ class CPU:
                 self.reg[7] += 1
                 # pc += 2
                 # print(self.ram[0xf0:0xf4])
+            elif instruction == CALL:
+                # get address of the next instruction after the CALL
+                return_addr = self.pc + 2
+                # push it on stack
+                self.push_val(return_addr)
+                self.ram_write(self.reg[7], return_addr)
+                # get subroutine address from register
+                reg_num = self.ram[self.pc + 1]
+                subroutine_addr = self.reg[reg_num]
+                # jump to it
+                self.pc = subroutine_addr
+            elif instruction == RET:
+                # get return addr from top of stack
+                return_addr = self.pop_val()
+                # store in the PC
+                self.pc = return_addr
+            elif instruction == ADD:
+                # print(f'ADD instruction: {instruction}')
+                self.alu("ADD", operand_a, operand_b)
             else:
                 print('instruction not found')
                 sys.exit(1)
 
-            inst_len = ((instruction & 0b11000000) >> 6) + 1
-            # OR: 
-            # inst_len = (instruction >> 6) + 1
-            self.pc += inst_len
-
+            # if instruction handler sets the `PC` directly, don't advance PC to next instruction
+            if instruction == RET or instruction == CALL:
+                pass
+            else:
+                inst_len = ((instruction & 0b11000000) >> 6) + 1
+                # print(inst_len)
+                # OR: 
+                # inst_len = (instruction >> 6) + 1
+                self.pc += inst_len
+                
             # read instruction layout!!!
             # * AND takes two arguments (takes 3 bytes) bc 10 are first 2 #'s in operand - get them out
             #   0b10100010

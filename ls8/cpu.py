@@ -12,6 +12,10 @@ POP = 0b01000110
 CALL = 0b01010000
 RET = 0b00010001
 ADD = 0b10100000
+CMP = 0b10100111
+JMP = 0b01010100
+JEQ = 0b01010101
+JNE = 0b01010110
 
 class CPU:
     """Main CPU class."""
@@ -22,6 +26,7 @@ class CPU:
         self.reg = [0] * 8
         self.reg[7] = 0xf4 # Stack pointer
         self.pc = 0
+        self.fl = 0b00000000
 
     def load(self):
         """Load a program into memory."""
@@ -72,7 +77,18 @@ class CPU:
             self.reg[reg_a] += self.reg[reg_b]
         elif op == "MUL":
             self.reg[reg_a] *= self.reg[reg_b]
-        #elif op == "SUB": etc
+        elif op == "CMP":
+            # less than
+            if self.reg[reg_a] < self.reg[reg_b]:
+                self.fl = 'L'
+            # greater than
+            elif self.reg[reg_a] > self.reg[reg_b]:
+                self.fl = 'G'
+            # equal to
+            elif self.reg[reg_a] == self.reg[reg_b]:
+                self.fl = 'E'
+            else:
+                self.fl = 0
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -178,14 +194,30 @@ class CPU:
                 # store in the PC
                 self.pc = return_addr
             elif instruction == ADD:
-                # print(f'ADD instruction: {instruction}')
                 self.alu("ADD", operand_a, operand_b)
+            elif instruction == CMP:
+                self.alu("CMP", operand_a, operand_b)
+            elif instruction == JMP:
+                # set pc to address stored in the given register
+                self.pc = self.reg[operand_a]
+            elif instruction == JEQ:
+                # if `equal` flag is set (true), jump to the address stored in the given register
+                if self.fl == 'E': 
+                    self.pc = self.reg[operand_a]
+            elif instruction == JNE:
+                # if `E` flag is clear (false, 0), jump to the address stored in the given register
+                if self.fl != 'E': 
+                    self.pc = self.reg[operand_a]
             else:
                 print('instruction not found')
                 sys.exit(1)
 
-            # if instruction handler sets the `PC` directly, don't advance PC to next instruction
-            if instruction == RET or instruction == CALL:
+            # if instruction handler sets pc directly, don't advance pc to next instruction
+            if instruction == RET or instruction == CALL or instruction == JMP:
+                pass
+            elif instruction == JEQ and self.fl == 'E':
+                pass
+            elif instruction == JNE and self.fl != 'E':
                 pass
             else:
                 inst_len = ((instruction & 0b11000000) >> 6) + 1
